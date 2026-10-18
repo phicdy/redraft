@@ -13,9 +13,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
@@ -35,6 +35,100 @@ jobs:
       - name: Report Gradle failure
         if: failure()
         run: |
+          details=$(grep -E -A 30 "What went wrong|^e: " gradle.log | head -100)
+          details="${details//'%'/'%25'}"
+          details="${details//$'\r'/}"
+          details="${details//$'\n'/'%0A'}"
+          echo "::error title=Gradle failure::${details}"
+
+  # Renders the Compose previews listed in PreviewCatalog and posts them as a PR comment.
+  screenshots:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Install Japanese fonts
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends fonts-noto-cjk
+
+      # --no-build-cache: fonts are not task inputs, so a cached result could lack them.
+      - name: Render previews
+        run: >-
+          ./gradlew :shared:ui:desktopTest --tests '*PreviewScreenshotTest' --no-build-cache
+          2>&1 | tee gradle.log
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: compose-previews
+          path: shared/ui/build/screenshots/
+          if-no-files-found: warn
+
+      - name: Check for generated screenshots
+        id: screenshots
+        run: |
+          count=$(find shared/ui/build/screenshots -maxdepth 1 -type f -name '*.png' 2>/dev/null | wc -l)
+          echo "Found $count screenshot(s)"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
+      - name: Publish screenshots to the screenshots branch
+        id: publish
+        if: steps.screenshots.outputs.count > 0
+        env:
+          SRC_DIR: shared/ui/build/screenshots
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_ID: ${{ github.run_id }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body_file="$RUNNER_TEMP/screenshot-comment.md"
+          BODY_FILE="$body_file" .github/scripts/publish_screenshots.sh
+          {
+            echo 'body<<SCREENSHOT_COMMENT_EOF'
+            cat "$body_file"
+            echo 'SCREENSHOT_COMMENT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Find screenshot comment
+        uses: peter-evans/find-comment@0ab0dc781059d605234c6f0b3e02a2764a42d456
+        id: find_comment
+        if: steps.screenshots.outputs.count > 0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- screenshot-comment -->'
+
+      - name: Create or update screenshot comment
+        uses: peter-evans/create-or-update-comment@35d33e4f3771787d0f602f5dca94f47c68b5cc60
+        if: steps.screenshots.outputs.count > 0
+        with:
+          body: ${{ steps.publish.outputs.body }}
+          edit-mode: replace
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Report Gradle failure
+        if: failure()
+        run: |
+          [ -f gradle.log ] || exit 0
           details=$(grep -E -A 30 "What went wrong|^e: " gradle.log | head -100)
           details="${details//'%'/'%25'}"
           details="${details//$'\r'/}"

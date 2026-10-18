@@ -23,6 +23,7 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.ui)
             implementation(libs.compose.material3)
+            implementation(libs.compose.ui.tooling.preview)
 
             implementation(libs.jetbrains.lifecycle.viewmodel.compose)
             implementation(libs.jetbrains.lifecycle.runtime.compose)
@@ -33,5 +34,21 @@ kotlin {
             implementation(libs.koin.core.viewmodel)
             implementation(libs.koin.compose.viewmodel)
         }
+        val desktopTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.compose.ui.test)
+                implementation(compose.desktop.currentOs)
+            }
+        }
     }
+}
+
+// Preview screenshots rendered by PreviewScreenshotTest. Declared as a test output so that
+// a build-cache hit restores the images instead of skipping them.
+val screenshotDir: Provider<Directory> = layout.buildDirectory.dir("screenshots")
+tasks.withType<Test>().configureEach {
+    val dir = screenshotDir.get().asFile
+    systemProperty("redraft.screenshotDir", dir.absolutePath)
+    outputs.dir(dir)
 }

@@ -34,3 +34,13 @@ Dependencies point one way: `ui → data / llm → model`.
 ```
 
 Requires JDK 17 or later.
+
+## Compose previews on pull requests
+
+Previews listed in `shared/ui/src/desktopTest/.../screenshot/PreviewCatalog.kt` are rendered on the desktop (JVM)
+target in light and dark theme by `PreviewScreenshotTest`, pushed to the `screenshots` branch, and posted as a
+comment on the pull request. When you add a `@Preview`, add it to `PreviewCatalog` as well.
+
+```sh
+./gradlew :shared:ui:desktopTest --tests '*PreviewScreenshotTest'  # writes shared/ui/build/screenshots/*.png
+```

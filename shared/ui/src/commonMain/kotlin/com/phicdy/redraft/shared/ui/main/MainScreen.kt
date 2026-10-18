@@ -15,9 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phicdy.redraft.shared.model.InputMode
+import com.phicdy.redraft.shared.ui.theme.RedraftTheme
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -84,4 +86,43 @@ private fun ModeChip(
         onClick = { onModeSelect(if (isSelectedByUser) null else mode) },
         label = { Text(label) },
     )
+}
+
+@Preview
+@Composable
+internal fun MainContentEmptyPreview() {
+    RedraftTheme {
+        MainContent(uiState = MainUiState(), onInputChange = {}, onModeSelect = {})
+    }
+}
+
+@Preview
+@Composable
+internal fun MainContentTranslatePreview() {
+    RedraftTheme {
+        MainContent(
+            uiState = MainUiState(
+                input = "来週の会議を金曜日に変更できますか？",
+                detectedMode = InputMode.Translate,
+            ),
+            onInputChange = {},
+            onModeSelect = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+internal fun MainContentProofreadSelectedPreview() {
+    RedraftTheme {
+        MainContent(
+            uiState = MainUiState(
+                input = "I look forward to see you next week.",
+                detectedMode = InputMode.Proofread,
+                selectedMode = InputMode.Proofread,
+            ),
+            onInputChange = {},
+            onModeSelect = {},
+        )
+    }
 }

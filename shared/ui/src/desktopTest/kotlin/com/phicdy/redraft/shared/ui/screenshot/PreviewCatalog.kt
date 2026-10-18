@@ -1,0 +1,22 @@
+package com.phicdy.redraft.shared.ui.screenshot
+
+import androidx.compose.runtime.Composable
+import com.phicdy.redraft.shared.ui.main.MainContentEmptyPreview
+import com.phicdy.redraft.shared.ui.main.MainContentProofreadSelectedPreview
+import com.phicdy.redraft.shared.ui.main.MainContentTranslatePreview
+
+internal class PreviewEntry(
+    /** Used as the file name, so keep it unique and free of spaces. */
+    val name: String,
+    val content: @Composable () -> Unit,
+)
+
+/**
+ * Previews rendered into PNGs and shown on pull requests.
+ * Add an entry here whenever a new @Preview is added.
+ */
+internal val previewCatalog: List<PreviewEntry> = listOf(
+    PreviewEntry("MainContentEmpty") { MainContentEmptyPreview() },
+    PreviewEntry("MainContentTranslate") { MainContentTranslatePreview() },
+    PreviewEntry("MainContentProofreadSelected") { MainContentProofreadSelectedPreview() },
+)
