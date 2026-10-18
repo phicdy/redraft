@@ -23,10 +23,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
 
       - name: Run tests
-        run: ./gradlew desktopTest
+        run: ./gradlew desktopTest 2>&1 | tee -a gradle.log
 
       - name: Build Android app
-        run: ./gradlew :androidApp:assembleDebug
+        run: ./gradlew :androidApp:assembleDebug 2>&1 | tee -a gradle.log
 
       - name: Build desktop app
-        run: ./gradlew :desktopApp:jar
+        run: ./gradlew :desktopApp:jar 2>&1 | tee -a gradle.log
+
+      # Surface the Gradle error as an annotation so it is readable without opening the full log.
+      - name: Report Gradle failure
+        if: failure()
+        run: |
+          details=$(grep -E -A 30 "What went wrong|^e: " gradle.log | head -100)
+          details="${details//'%'/'%25'}"
+          details="${details//$'\r'/}"
+          details="${details//$'\n'/'%0A'}"
+          echo "::error title=Gradle failure::${details}"
