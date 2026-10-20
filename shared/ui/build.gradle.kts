@@ -34,9 +34,14 @@ kotlin {
             implementation(libs.koin.core.viewmodel)
             implementation(libs.koin.compose.viewmodel)
         }
+        androidMain.dependencies {
+            // System back handling (the non-deprecated replacement for BackHandler).
+            implementation(libs.jetbrains.navigationevent.compose)
+        }
         val desktopTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.compose.ui.test)
                 implementation(compose.desktop.currentOs)
             }

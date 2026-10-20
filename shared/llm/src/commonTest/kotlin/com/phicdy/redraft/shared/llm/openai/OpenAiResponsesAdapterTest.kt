@@ -5,6 +5,7 @@ import com.phicdy.redraft.shared.llm.LlmError
 import com.phicdy.redraft.shared.llm.LlmException
 import com.phicdy.redraft.shared.llm.LlmRequest
 import com.phicdy.redraft.shared.llm.ProviderConfig
+import com.phicdy.redraft.shared.llm.ProviderConfigProvider
 import com.phicdy.redraft.shared.llm.ProviderKind
 import com.phicdy.redraft.shared.llm.StructuredLlmClient
 import com.phicdy.redraft.shared.llm.TokenUsage
@@ -43,7 +44,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class OpenAiResponsesAdapterTest {
-    private val config = ProviderConfig(
+    private var config = ProviderConfig(
         id = "work",
         kind = ProviderKind.OpenAiResponses,
         baseUrl = "https://proxy.example.com/openai/v1/",
@@ -78,7 +79,7 @@ class OpenAiResponsesAdapterTest {
         val client = HttpClient(engine) {
             install(HttpTimeout)
         }
-        return OpenAiResponsesAdapter(client, config, ApiKeyProvider { apiKey })
+        return OpenAiResponsesAdapter(client, ProviderConfigProvider { config }, ApiKeyProvider { apiKey })
     }
 
     private fun MockRequestHandleScope.json(body: String, status: HttpStatusCode = HttpStatusCode.OK): HttpResponseData =
@@ -120,6 +121,36 @@ class OpenAiResponsesAdapterTest {
         assertEquals("Bearer sk-test", headers[HttpHeaders.Authorization])
         assertEquals("redraft", headers["X-Team"])
         assertEquals("proj_123", headers["OpenAI-Project"])
+    }
+
+    @Test
+    fun readsTheCurrentConfigOnEveryRequest(): TestResult = runTest {
+        val requestedKeyIds = mutableListOf<String>()
+        val engine = MockEngine { data ->
+            requests += data
+            json(successResponse(validOutput))
+        }
+        val adapter = OpenAiResponsesAdapter(
+            HttpClient(engine),
+            ProviderConfigProvider { config },
+            ApiKeyProvider { providerId ->
+                requestedKeyIds += providerId
+                "sk-test"
+            },
+        )
+
+        adapter.complete(request)
+        config = config.copy(
+            id = "personal",
+            baseUrl = "https://api.example.org/v1",
+            extraHeaders = emptyMap(),
+        )
+        adapter.complete(request)
+
+        assertEquals("https://proxy.example.com/openai/v1/responses", requests[0].url.toString())
+        assertEquals("https://api.example.org/v1/responses", requests[1].url.toString())
+        assertEquals(null, requests[1].headers["X-Team"])
+        assertEquals(listOf("work", "personal"), requestedKeyIds)
     }
 
     @Test
@@ -299,7 +330,7 @@ class OpenAiResponsesAdapterTest {
         val client = HttpClient(engine) {
             install(HttpTimeout) { requestTimeoutMillis = 100 }
         }
-        val adapter = OpenAiResponsesAdapter(client, config, ApiKeyProvider { "sk-test" })
+        val adapter = OpenAiResponsesAdapter(client, ProviderConfigProvider { config }, ApiKeyProvider { "sk-test" })
 
         val error = assertFailsWith<LlmException> { adapter.complete(request) }.error
 

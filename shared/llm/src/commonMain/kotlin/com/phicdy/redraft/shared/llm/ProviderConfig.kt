@@ -23,6 +23,16 @@ data class ProviderConfig(
     val extraHeaders: Map<String, String> = emptyMap(),
 )
 
+/**
+ * Supplies the provider config to use for the next request.
+ *
+ * Read once per request so that changes made in the settings screen apply without restarting.
+ * The app bridges it from the data layer, which this module must not depend on.
+ */
+fun interface ProviderConfigProvider {
+    suspend fun current(): ProviderConfig
+}
+
 @Serializable
 enum class ProviderKind {
     @SerialName("openai_responses")
