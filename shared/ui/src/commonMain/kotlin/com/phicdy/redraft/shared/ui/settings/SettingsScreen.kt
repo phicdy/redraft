@@ -95,7 +95,7 @@ internal fun SettingsContent(
                 singleLine = true,
                 isError = uiState.baseUrlError != null,
                 supportingText = {
-                    Text(uiState.baseUrlError?.label() ?: "https:// で始まる URL（既定: ${OpenAiDefaults.BASE_URL}）")
+                    Text(uiState.baseUrlError?.label() ?: "https のみ。既定: ${OpenAiDefaults.BASE_URL}")
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             )
@@ -138,7 +138,7 @@ private fun ApiKeySection(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = if (uiState.hasSavedApiKey) "API キー: 保存済み" else "API キー: 未設定",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             color = if (uiState.hasSavedApiKey) {
                 MaterialTheme.colorScheme.primary
             } else {
