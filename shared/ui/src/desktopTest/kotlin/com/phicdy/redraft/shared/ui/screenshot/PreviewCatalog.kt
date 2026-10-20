@@ -10,6 +10,9 @@ import com.phicdy.redraft.shared.ui.main.MainContentTranslatePreview
 import com.phicdy.redraft.shared.ui.main.MainContentTranslationResultPreview
 import com.phicdy.redraft.shared.ui.main.ProofreadResultViewPreview
 import com.phicdy.redraft.shared.ui.main.TranslationResultViewPreview
+import com.phicdy.redraft.shared.ui.settings.SettingsContentEmptyPreview
+import com.phicdy.redraft.shared.ui.settings.SettingsContentKeySavedPreview
+import com.phicdy.redraft.shared.ui.settings.SettingsContentValidationErrorPreview
 
 internal class PreviewEntry(
     /** Used as the file name, so keep it unique and free of spaces. */
@@ -31,4 +34,7 @@ internal val previewCatalog: List<PreviewEntry> = listOf(
     PreviewEntry("MainContentError") { MainContentErrorPreview() },
     PreviewEntry("TranslationResultView") { TranslationResultViewPreview() },
     PreviewEntry("ProofreadResultView") { ProofreadResultViewPreview() },
+    PreviewEntry("SettingsContentEmpty") { SettingsContentEmptyPreview() },
+    PreviewEntry("SettingsContentKeySaved") { SettingsContentKeySavedPreview() },
+    PreviewEntry("SettingsContentValidationError") { SettingsContentValidationErrorPreview() },
 )
