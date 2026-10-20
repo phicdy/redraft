@@ -183,11 +183,12 @@ private fun severityColors(severity: Severity, colorScheme: ColorScheme): Severi
         onHighlight = colorScheme.onErrorContainer,
     )
 
+    // Secondary rather than tertiary: the default tertiary container is too close to the error container.
     Severity.Improvement -> SeverityColors(
-        tag = colorScheme.tertiary,
-        onTag = colorScheme.onTertiary,
-        highlight = colorScheme.tertiaryContainer,
-        onHighlight = colorScheme.onTertiaryContainer,
+        tag = colorScheme.secondary,
+        onTag = colorScheme.onSecondary,
+        highlight = colorScheme.secondaryContainer,
+        onHighlight = colorScheme.onSecondaryContainer,
     )
 }
 

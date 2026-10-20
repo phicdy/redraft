@@ -75,6 +75,6 @@ internal fun InputMode?.runLabel(): String = when (this) {
 
 /** Shown next to the progress indicator. */
 internal fun InputMode.runningLabel(): String = when (this) {
-    InputMode.Translate -> "英訳しています…"
-    InputMode.Proofread -> "校正しています…"
+    InputMode.Translate -> "英訳中…"
+    InputMode.Proofread -> "校正中…"
 }
