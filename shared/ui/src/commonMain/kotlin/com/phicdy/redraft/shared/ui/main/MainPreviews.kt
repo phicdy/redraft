@@ -11,14 +11,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.phicdy.redraft.shared.llm.LlmError
 import com.phicdy.redraft.shared.llm.TokenUsage
+import com.phicdy.redraft.shared.llm.prompt.Politeness
+import com.phicdy.redraft.shared.llm.prompt.WritingContext
+import com.phicdy.redraft.shared.llm.prompt.WritingPurpose
 import com.phicdy.redraft.shared.model.ErrorCategory
+import com.phicdy.redraft.shared.model.InputMode
 import com.phicdy.redraft.shared.model.ProofreadResult
 import com.phicdy.redraft.shared.model.Severity
 import com.phicdy.redraft.shared.model.TranslationResult
 import com.phicdy.redraft.shared.ui.main.result.ProofreadResultView
 import com.phicdy.redraft.shared.ui.main.result.TranslationResultView
 import com.phicdy.redraft.shared.ui.theme.RedraftTheme
+
+private const val SAMPLE_JAPANESE = "来週の定例会議を金曜日の午後に変更できますか？資料は前日までに共有します。"
 
 private const val SAMPLE_ENGLISH =
     "I look forward to see you in the meeting tomorrow. " +
@@ -113,6 +120,96 @@ private val sampleProofread = ProofreadResult(
     overallComment = "意図は明確に伝わっています。look forward to の後は動名詞になる点と、" +
         "information が不可算名詞である点に注意しましょう。",
 )
+
+@Composable
+private fun MainContentPreview(uiState: MainUiState) {
+    RedraftTheme {
+        MainContent(
+            uiState = uiState,
+            onInputChange = {},
+            onModeSelect = {},
+            onPurposeSelect = {},
+            onPolitenessSelect = {},
+            onSubmit = {},
+            onCancel = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+internal fun MainContentEmptyPreview() {
+    MainContentPreview(MainUiState())
+}
+
+@Preview
+@Composable
+internal fun MainContentTranslatePreview() {
+    MainContentPreview(
+        MainUiState(input = SAMPLE_JAPANESE, detectedMode = InputMode.Translate),
+    )
+}
+
+@Preview
+@Composable
+internal fun MainContentProofreadSelectedPreview() {
+    MainContentPreview(
+        MainUiState(
+            input = SAMPLE_ENGLISH,
+            detectedMode = InputMode.Proofread,
+            selectedMode = InputMode.Proofread,
+            writingContext = WritingContext(purpose = WritingPurpose.Email, politeness = Politeness.Formal),
+        ),
+    )
+}
+
+@Preview
+@Composable
+internal fun MainContentLoadingPreview() {
+    MainContentPreview(
+        MainUiState(
+            input = SAMPLE_JAPANESE,
+            detectedMode = InputMode.Translate,
+            result = ResultState.Loading(InputMode.Translate),
+        ),
+    )
+}
+
+@Preview
+@Composable
+internal fun MainContentTranslationResultPreview() {
+    MainContentPreview(
+        MainUiState(
+            input = SAMPLE_JAPANESE,
+            detectedMode = InputMode.Translate,
+            result = ResultState.Translated(input = SAMPLE_JAPANESE, result = sampleTranslation, usage = sampleUsage),
+        ),
+    )
+}
+
+@Preview
+@Composable
+internal fun MainContentProofreadResultPreview() {
+    MainContentPreview(
+        MainUiState(
+            input = SAMPLE_ENGLISH,
+            detectedMode = InputMode.Proofread,
+            result = ResultState.Proofread(input = SAMPLE_ENGLISH, result = sampleProofread, usage = sampleUsage),
+        ),
+    )
+}
+
+@Preview
+@Composable
+internal fun MainContentErrorPreview() {
+    MainContentPreview(
+        MainUiState(
+            input = SAMPLE_ENGLISH,
+            detectedMode = InputMode.Proofread,
+            result = ResultState.Failed(LlmError.MissingApiKey.toUserMessage()),
+        ),
+    )
+}
 
 /** The translation result alone, so the lower sections are visible in screenshots. */
 @Preview
