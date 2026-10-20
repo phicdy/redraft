@@ -22,17 +22,14 @@ val uiModule: Module = module {
 /**
  * Supplies the LLM layer, which must not depend on the data layer, with the saved connection
  * settings and API key, read on every request.
- *
- * Until an [ApiKeyStore] implementation is bound, the key is null and requests fail with
- * `LlmError.MissingApiKey`.
  */
 val connectionBridgeModule: Module = module {
     single<LlmConnectionSource> {
         val repository = get<ConnectionSettingsRepository>()
-        val store = getOrNull<ApiKeyStore>()
+        val store = get<ApiKeyStore>()
         LlmConnectionSource {
             val config = repository.settings.first().toProviderConfig()
-            LlmConnection(config = config, apiKey = store?.get(config.id))
+            LlmConnection(config = config, apiKey = store.get(config.id))
         }
     }
 }

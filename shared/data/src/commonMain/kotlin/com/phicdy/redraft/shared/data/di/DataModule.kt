@@ -6,12 +6,12 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /**
- * Platform bindings: the settings `DataStore<Preferences>`.
+ * Platform bindings: an `ApiKeyStore` and the settings `DataStore<Preferences>`.
  * Android needs `androidContext(...)` to be set when Koin starts.
  */
 internal expect val platformDataModule: Module
 
-/** History (Room) and API key storage bindings are added here as they are implemented. */
+/** History (Room) bindings are added here as they are implemented. */
 val dataModule: Module = module {
     includes(platformDataModule)
     single<ConnectionSettingsRepository> { DataStoreConnectionSettingsRepository(dataStore = get()) }
