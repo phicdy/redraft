@@ -14,8 +14,14 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.shared.model)
+            implementation(libs.androidx.datastore.preferences.core)
+            implementation(libs.kotlinx.coroutines.core)
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
