@@ -6,12 +6,15 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
+import com.phicdy.redraft.shared.data.AndroidKeystoreApiKeyStore
+import com.phicdy.redraft.shared.data.ApiKeyStore
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.io.File
 
 /** `Context` is registered by `androidContext(...)` in `RedraftApplication`. */
 internal actual val platformDataModule: Module = module {
+    single<ApiKeyStore> { AndroidKeystoreApiKeyStore(context = get<Context>()) }
     single<DataStore<Preferences>> {
         val context = get<Context>()
         PreferenceDataStoreFactory.create(
