@@ -10,6 +10,7 @@ import com.phicdy.redraft.shared.llm.ProviderConfig
 import com.phicdy.redraft.shared.llm.di.llmModule
 import com.phicdy.redraft.shared.llm.openai.OpenAiDefaults
 import com.phicdy.redraft.shared.ui.main.MainViewModel
+import com.phicdy.redraft.shared.ui.settings.SettingsViewModel
 import kotlinx.coroutines.flow.first
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
@@ -17,6 +18,7 @@ import org.koin.dsl.module
 
 val uiModule: Module = module {
     viewModelOf(::MainViewModel)
+    viewModelOf(::SettingsViewModel)
 }
 
 /**
