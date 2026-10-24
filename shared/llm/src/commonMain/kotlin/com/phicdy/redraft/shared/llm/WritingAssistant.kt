@@ -11,13 +11,12 @@ import com.phicdy.redraft.shared.model.TranslationResult
  */
 class WritingAssistant(
     private val client: LlmClient,
-    private val config: ProviderConfig,
 ) {
     suspend fun translate(
         japanese: String,
         context: WritingContext = WritingContext(),
     ): LlmResult<TranslationResult> = client.generate(
-        Prompts.translation(input = japanese, context = context, model = config.defaultModel),
+        Prompts.translation(input = japanese, context = context),
         TranslationResult.serializer(),
     )
 
@@ -25,7 +24,7 @@ class WritingAssistant(
         english: String,
         context: WritingContext = WritingContext(),
     ): LlmResult<ProofreadResult> = client.generate(
-        Prompts.proofread(input = english, context = context, model = config.defaultModel),
+        Prompts.proofread(input = english, context = context),
         ProofreadResult.serializer(),
     )
 }

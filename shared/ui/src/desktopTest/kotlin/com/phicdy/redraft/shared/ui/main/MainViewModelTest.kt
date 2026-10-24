@@ -1,8 +1,6 @@
 package com.phicdy.redraft.shared.ui.main
 
 import com.phicdy.redraft.shared.llm.LlmError
-import com.phicdy.redraft.shared.llm.ProviderConfig
-import com.phicdy.redraft.shared.llm.ProviderKind
 import com.phicdy.redraft.shared.llm.WritingAssistant
 import com.phicdy.redraft.shared.llm.prompt.Politeness
 import com.phicdy.redraft.shared.llm.prompt.Prompts
@@ -32,12 +30,6 @@ import kotlin.test.assertTrue
 class MainViewModelTest {
     private val dispatcher: TestDispatcher = StandardTestDispatcher()
     private val client = FakeLlmClient()
-    private val config = ProviderConfig(
-        id = "fake",
-        kind = ProviderKind.OpenAiResponses,
-        baseUrl = "https://example.invalid",
-        defaultModel = "fake-model",
-    )
 
     @BeforeTest
     fun setUp() {
@@ -49,7 +41,7 @@ class MainViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): MainViewModel = MainViewModel(WritingAssistant(client = client, config = config))
+    private fun createViewModel(): MainViewModel = MainViewModel(WritingAssistant(client = client))
 
     @Test
     fun japaneseInputIsTranslated(): TestResult = runTest(dispatcher) {
@@ -125,7 +117,6 @@ class MainViewModelTest {
         val expected = Prompts.proofread(
             input = ENGLISH,
             context = WritingContext(purpose = WritingPurpose.Email, politeness = Politeness.Formal),
-            model = config.defaultModel,
         )
         assertEquals(expected, client.requests.single())
     }

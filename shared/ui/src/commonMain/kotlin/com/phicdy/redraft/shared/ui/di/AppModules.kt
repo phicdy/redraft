@@ -2,8 +2,10 @@ package com.phicdy.redraft.shared.ui.di
 
 import com.phicdy.redraft.shared.data.ApiKeyStore
 import com.phicdy.redraft.shared.data.di.dataModule
-import com.phicdy.redraft.shared.llm.ApiKeyProvider
+import com.phicdy.redraft.shared.llm.LlmConnection
+import com.phicdy.redraft.shared.llm.LlmConnectionSource
 import com.phicdy.redraft.shared.llm.di.llmModule
+import com.phicdy.redraft.shared.llm.openai.OpenAiDefaults
 import com.phicdy.redraft.shared.ui.main.MainViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
@@ -14,16 +16,22 @@ val uiModule: Module = module {
 }
 
 /**
- * Bridges the data layer's key storage to the LLM layer, which must not depend on it.
- * Until an [ApiKeyStore] implementation is bound, every lookup returns null and requests
- * fail with `LlmError.MissingApiKey`.
+ * Supplies the LLM layer, which must not depend on the data layer, with the connection
+ * settings and API key, read on every request.
+ *
+ * Until connection settings are saved in the data layer, the config is always the OpenAI default.
+ * Until an [ApiKeyStore] implementation is bound, the key is null and requests fail with
+ * `LlmError.MissingApiKey`.
  */
-val apiKeyBridgeModule: Module = module {
-    single<ApiKeyProvider> {
+val connectionBridgeModule: Module = module {
+    single<LlmConnectionSource> {
         val store = getOrNull<ApiKeyStore>()
-        ApiKeyProvider { providerId -> store?.get(providerId) }
+        LlmConnectionSource {
+            val config = OpenAiDefaults.config
+            LlmConnection(config = config, apiKey = store?.get(config.id))
+        }
     }
 }
 
 /** All Koin modules, passed to startKoin by each app entry point. */
-val redraftModules: List<Module> = listOf(llmModule, dataModule, apiKeyBridgeModule, uiModule)
+val redraftModules: List<Module> = listOf(llmModule, dataModule, connectionBridgeModule, uiModule)

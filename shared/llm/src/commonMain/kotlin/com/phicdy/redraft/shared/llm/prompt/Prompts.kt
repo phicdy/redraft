@@ -24,7 +24,7 @@ object Prompts {
     fun translation(
         input: String,
         context: WritingContext,
-        model: String,
+        model: String? = null,
         maxOutputTokens: Int = DEFAULT_MAX_OUTPUT_TOKENS,
     ): LlmRequest = LlmRequest(
         instructions = translationInstructions(context),
@@ -37,7 +37,7 @@ object Prompts {
     fun proofread(
         input: String,
         context: WritingContext,
-        model: String,
+        model: String? = null,
         maxOutputTokens: Int = DEFAULT_MAX_OUTPUT_TOKENS,
     ): LlmRequest = LlmRequest(
         instructions = proofreadInstructions(context),

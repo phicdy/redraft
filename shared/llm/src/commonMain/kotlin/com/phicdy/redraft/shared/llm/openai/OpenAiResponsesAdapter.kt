@@ -1,7 +1,7 @@
 package com.phicdy.redraft.shared.llm.openai
 
-import com.phicdy.redraft.shared.llm.ApiKeyProvider
 import com.phicdy.redraft.shared.llm.LlmAdapter
+import com.phicdy.redraft.shared.llm.LlmConnectionSource
 import com.phicdy.redraft.shared.llm.LlmError
 import com.phicdy.redraft.shared.llm.LlmException
 import com.phicdy.redraft.shared.llm.LlmRequest
@@ -27,22 +27,25 @@ import kotlinx.serialization.json.Json
 /**
  * Adapter for the OpenAI Responses API (`POST {baseUrl}/responses`).
  *
- * The base URL, model and extra headers come from [config], so the same adapter works
- * against api.openai.com or a compatible proxy. Requests are sent with `store: false`
- * and a strict JSON schema in `text.format`.
+ * The base URL, default model, extra headers and API key come from [connectionSource], read
+ * once per request, so the same adapter works against api.openai.com or a compatible proxy and
+ * follows settings changes. Requests are sent with `store: false` and a strict JSON schema in
+ * `text.format`.
  */
 class OpenAiResponsesAdapter(
     private val httpClient: HttpClient,
-    private val config: ProviderConfig,
-    private val apiKeyProvider: ApiKeyProvider,
+    private val connectionSource: LlmConnectionSource,
     private val json: Json = openAiJson,
 ) : LlmAdapter {
     override suspend fun complete(request: LlmRequest): LlmResult<String> {
-        val apiKey = apiKeyProvider.apiKey(config.id)
+        val connection = connectionSource.current()
+        val config = connection.config
+        val apiKey = connection.apiKey
         if (apiKey.isNullOrBlank()) throw LlmException(LlmError.MissingApiKey)
 
-        val body = json.encodeToString(ResponsesRequest.serializer(), request.toResponsesRequest())
-        val response = send(apiKey, body)
+        val model = request.model ?: config.defaultModel
+        val body = json.encodeToString(ResponsesRequest.serializer(), request.toResponsesRequest(model))
+        val response = send(config, apiKey, body)
         val text = readBody(response)
         if (!response.status.isSuccess()) {
             throw LlmException(httpError(response, text))
@@ -53,11 +56,11 @@ class OpenAiResponsesAdapter(
             // SerializationException is an IllegalArgumentException.
             throw LlmException(LlmError.UnexpectedResponse(e.message), e)
         }
-        return parsed.toResult(fallbackModel = request.model)
+        return parsed.toResult(fallbackModel = model)
     }
 
-    private suspend fun send(apiKey: String, body: String): HttpResponse = guardTransport {
-        httpClient.post(endpoint()) {
+    private suspend fun send(config: ProviderConfig, apiKey: String, body: String): HttpResponse = guardTransport {
+        httpClient.post(endpoint(config)) {
             headers {
                 set(HttpHeaders.Authorization, "Bearer $apiKey")
                 config.extraHeaders.forEach { (name, value) -> set(name, value) }
@@ -68,7 +71,7 @@ class OpenAiResponsesAdapter(
 
     private suspend fun readBody(response: HttpResponse): String = guardTransport { response.bodyAsText() }
 
-    private fun endpoint(): String = config.baseUrl.trimEnd('/') + "/responses"
+    private fun endpoint(config: ProviderConfig): String = config.baseUrl.trimEnd('/') + "/responses"
 
     private fun httpError(response: HttpResponse, body: String): LlmError {
         val message = errorMessage(body)
@@ -91,7 +94,7 @@ class OpenAiResponsesAdapter(
         body.takeIf { it.isNotBlank() }?.take(MAX_ERROR_MESSAGE_LENGTH)
     }
 
-    private fun LlmRequest.toResponsesRequest(): ResponsesRequest = ResponsesRequest(
+    private fun LlmRequest.toResponsesRequest(model: String): ResponsesRequest = ResponsesRequest(
         model = model,
         instructions = instructions,
         input = input,

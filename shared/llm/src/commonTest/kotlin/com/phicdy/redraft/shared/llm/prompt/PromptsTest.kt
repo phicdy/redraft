@@ -3,6 +3,7 @@ package com.phicdy.redraft.shared.llm.prompt
 import com.phicdy.redraft.shared.llm.schema.OutputSchemas
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PromptsTest {
@@ -20,6 +21,12 @@ class PromptsTest {
         val request = Prompts.proofread("I look forward to see you.", WritingContext(), model = "m")
 
         assertEquals(OutputSchemas.proofread, request.schema)
+    }
+
+    @Test
+    fun modelIsLeftToTheConnectionByDefault() {
+        assertNull(Prompts.translation("明日の会議を延期したいです", WritingContext()).model)
+        assertNull(Prompts.proofread("I look forward to see you.", WritingContext()).model)
     }
 
     @Test

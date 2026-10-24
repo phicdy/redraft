@@ -1,8 +1,9 @@
 package com.phicdy.redraft.shared.llm.openai
 
-import com.phicdy.redraft.shared.llm.ApiKeyProvider
 import com.phicdy.redraft.shared.llm.LlmError
 import com.phicdy.redraft.shared.llm.LlmException
+import com.phicdy.redraft.shared.llm.LlmConnection
+import com.phicdy.redraft.shared.llm.LlmConnectionSource
 import com.phicdy.redraft.shared.llm.LlmRequest
 import com.phicdy.redraft.shared.llm.ProviderConfig
 import com.phicdy.redraft.shared.llm.ProviderKind
@@ -54,7 +55,6 @@ class OpenAiResponsesAdapterTest {
     private val request: LlmRequest = Prompts.proofread(
         input = "I look forward to see you.",
         context = WritingContext(),
-        model = "test-model",
     )
 
     private val validOutput = """
@@ -78,7 +78,7 @@ class OpenAiResponsesAdapterTest {
         val client = HttpClient(engine) {
             install(HttpTimeout)
         }
-        return OpenAiResponsesAdapter(client, config, ApiKeyProvider { apiKey })
+        return OpenAiResponsesAdapter(client, LlmConnectionSource { LlmConnection(config, apiKey) })
     }
 
     private fun MockRequestHandleScope.json(body: String, status: HttpStatusCode = HttpStatusCode.OK): HttpResponseData =
@@ -131,6 +131,42 @@ class OpenAiResponsesAdapterTest {
         assertEquals(validOutput, result.output)
         assertEquals(TokenUsage(inputTokens = 812, outputTokens = 154), result.usage)
         assertEquals("test-model-2026-08-01", result.model)
+    }
+
+    @Test
+    fun requestModelOverridesTheConnectionDefault(): TestResult = runTest {
+        var body: JsonObject? = null
+        val adapter = adapter { data ->
+            body = Json.parseToJsonElement(data.body.toByteArray().decodeToString()).jsonObject
+            json(successResponse(validOutput))
+        }
+
+        adapter.complete(request.copy(model = "override-model"))
+
+        assertEquals("override-model", checkNotNull(body)["model"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun readsTheConnectionOnEveryRequest(): TestResult = runTest {
+        var connection = LlmConnection(config, "sk-first")
+        val engine = MockEngine { data ->
+            requests += data
+            json(successResponse(validOutput))
+        }
+        val adapter = OpenAiResponsesAdapter(HttpClient(engine), LlmConnectionSource { connection })
+
+        adapter.complete(request)
+        connection = LlmConnection(
+            config.copy(baseUrl = "https://api.example.com/v1", extraHeaders = emptyMap()),
+            "sk-second",
+        )
+        adapter.complete(request)
+
+        assertEquals("https://proxy.example.com/openai/v1/responses", requests[0].url.toString())
+        assertEquals("Bearer sk-first", requests[0].headers[HttpHeaders.Authorization])
+        assertEquals("https://api.example.com/v1/responses", requests[1].url.toString())
+        assertEquals("Bearer sk-second", requests[1].headers[HttpHeaders.Authorization])
+        assertEquals(null, requests[1].headers["X-Team"])
     }
 
     @Test
@@ -299,7 +335,7 @@ class OpenAiResponsesAdapterTest {
         val client = HttpClient(engine) {
             install(HttpTimeout) { requestTimeoutMillis = 100 }
         }
-        val adapter = OpenAiResponsesAdapter(client, config, ApiKeyProvider { "sk-test" })
+        val adapter = OpenAiResponsesAdapter(client, LlmConnectionSource { LlmConnection(config, "sk-test") })
 
         val error = assertFailsWith<LlmException> { adapter.complete(request) }.error
 

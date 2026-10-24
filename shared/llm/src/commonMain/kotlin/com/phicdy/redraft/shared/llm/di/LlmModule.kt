@@ -2,10 +2,8 @@ package com.phicdy.redraft.shared.llm.di
 
 import com.phicdy.redraft.shared.llm.LlmAdapter
 import com.phicdy.redraft.shared.llm.LlmClient
-import com.phicdy.redraft.shared.llm.ProviderConfig
 import com.phicdy.redraft.shared.llm.StructuredLlmClient
 import com.phicdy.redraft.shared.llm.WritingAssistant
-import com.phicdy.redraft.shared.llm.openai.OpenAiDefaults
 import com.phicdy.redraft.shared.llm.openai.OpenAiResponsesAdapter
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
@@ -27,9 +25,8 @@ private const val CONNECT_TIMEOUT_MILLIS: Long = 15_000
 /**
  * LLM bindings.
  *
- * An `ApiKeyProvider` is not bound here because keys live in the data layer;
- * the app module bridges it from `ApiKeyStore`. Until settings exist, the provider
- * config is the OpenAI default.
+ * `LlmConnectionSource` is not bound here because connection settings and API keys live in
+ * the data layer; the app module bridges it.
  *
  * The HTTP engine is picked from the platform classpath (OkHttp on Android, Java on desktop).
  */
@@ -45,8 +42,7 @@ val llmModule: Module = module {
             }
         }
     }
-    single<ProviderConfig> { OpenAiDefaults.config }
-    single<LlmAdapter> { OpenAiResponsesAdapter(httpClient = get(), config = get(), apiKeyProvider = get()) }
+    single<LlmAdapter> { OpenAiResponsesAdapter(httpClient = get(), connectionSource = get()) }
     single<LlmClient> { StructuredLlmClient(adapter = get()) }
-    single<WritingAssistant> { WritingAssistant(client = get(), config = get()) }
+    single<WritingAssistant> { WritingAssistant(client = get()) }
 }
