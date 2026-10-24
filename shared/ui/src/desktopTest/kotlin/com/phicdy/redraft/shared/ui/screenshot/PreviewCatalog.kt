@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.phicdy.redraft.shared.ui.main.MainContentEmptyPreview
 import com.phicdy.redraft.shared.ui.main.MainContentProofreadSelectedPreview
 import com.phicdy.redraft.shared.ui.main.MainContentTranslatePreview
+import com.phicdy.redraft.shared.ui.main.ProofreadResultViewPreview
 import com.phicdy.redraft.shared.ui.main.TranslationResultViewPreview
 
 internal class PreviewEntry(
@@ -21,4 +22,5 @@ internal val previewCatalog: List<PreviewEntry> = listOf(
     PreviewEntry("MainContentTranslate") { MainContentTranslatePreview() },
     PreviewEntry("MainContentProofreadSelected") { MainContentProofreadSelectedPreview() },
     PreviewEntry("TranslationResultView") { TranslationResultViewPreview() },
+    PreviewEntry("ProofreadResultView") { ProofreadResultViewPreview() },
 )

@@ -13,9 +13,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phicdy.redraft.shared.llm.TokenUsage
 import com.phicdy.redraft.shared.model.ErrorCategory
+import com.phicdy.redraft.shared.model.ProofreadResult
+import com.phicdy.redraft.shared.model.Severity
 import com.phicdy.redraft.shared.model.TranslationResult
+import com.phicdy.redraft.shared.ui.main.result.ProofreadResultView
 import com.phicdy.redraft.shared.ui.main.result.TranslationResultView
 import com.phicdy.redraft.shared.ui.theme.RedraftTheme
+
+private const val SAMPLE_ENGLISH =
+    "I look forward to see you in the meeting tomorrow. " +
+        "Please let me know if you have any question about informations."
 
 private val sampleUsage = TokenUsage(inputTokens = 1_234, outputTokens = 567)
 
@@ -64,12 +71,64 @@ private val sampleTranslation = TranslationResult(
     ),
 )
 
+private val sampleProofread = ProofreadResult(
+    correctedText = "I look forward to seeing you at the meeting tomorrow. " +
+        "Please let me know if you have any questions about the information.",
+    issues = listOf(
+        ProofreadResult.Issue(
+            original = "to see",
+            suggestion = "to seeing",
+            category = ErrorCategory.VerbForm,
+            severity = Severity.Error,
+            explanation = "look forward to の to は前置詞なので、後ろは動名詞（-ing）になります。",
+        ),
+        ProofreadResult.Issue(
+            original = "in the meeting",
+            suggestion = "at the meeting",
+            category = ErrorCategory.Preposition,
+            severity = Severity.Improvement,
+            explanation = "会議という「場・イベント」で会う場合は at の方が自然です。",
+        ),
+        ProofreadResult.Issue(
+            original = "any question",
+            suggestion = "any questions",
+            category = ErrorCategory.Number,
+            severity = Severity.Error,
+            explanation = "疑問文・条件文の any の後ろの可算名詞は通常複数形にします。",
+        ),
+        ProofreadResult.Issue(
+            original = "informations",
+            suggestion = "the information",
+            category = ErrorCategory.Number,
+            severity = Severity.Error,
+            explanation = "information は不可算名詞なので複数形にしません。",
+        ),
+    ),
+    naturalAlternatives = listOf(
+        ProofreadResult.NaturalAlternative(
+            text = "See you at tomorrow's meeting! Feel free to reach out if you have any questions.",
+            nuance = "よりカジュアルで、社内チャット向きの言い方です。",
+        ),
+    ),
+    overallComment = "意図は明確に伝わっています。look forward to の後は動名詞になる点と、" +
+        "information が不可算名詞である点に注意しましょう。",
+)
+
 /** The translation result alone, so the lower sections are visible in screenshots. */
 @Preview
 @Composable
 internal fun TranslationResultViewPreview() {
     ResultViewPreview {
         TranslationResultView(result = sampleTranslation, usage = sampleUsage)
+    }
+}
+
+/** The proofread result alone, so the highlighted original and issues are visible in screenshots. */
+@Preview
+@Composable
+internal fun ProofreadResultViewPreview() {
+    ResultViewPreview {
+        ProofreadResultView(input = SAMPLE_ENGLISH, result = sampleProofread, usage = sampleUsage)
     }
 }
 
