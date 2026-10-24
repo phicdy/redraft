@@ -21,8 +21,9 @@ data class LlmRequest(
     val input: String,
     /** JSON schema for structured output. */
     val schema: OutputSchema,
-    val model: String,
     val maxOutputTokens: Int,
+    /** Model override; null uses the connection's default model. */
+    val model: String? = null,
 )
 
 data class OutputSchema(

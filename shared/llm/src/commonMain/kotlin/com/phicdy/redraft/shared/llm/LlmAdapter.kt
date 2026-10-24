@@ -14,7 +14,21 @@ interface LlmAdapter {
     suspend fun complete(request: LlmRequest): LlmResult<String>
 }
 
-/** Supplies the API key of a provider config. Backed by `ApiKeyStore` in the app. */
-fun interface ApiKeyProvider {
-    suspend fun apiKey(providerId: String): String?
+/**
+ * Everything an adapter needs to reach a provider: the connection settings and the API key.
+ * [apiKey] is null when no key has been saved for [config].
+ */
+data class LlmConnection(
+    val config: ProviderConfig,
+    val apiKey: String?,
+)
+
+/**
+ * Supplies the [LlmConnection] for the next request.
+ *
+ * Read once per request so that changes made in the settings screen apply without restarting.
+ * The app bridges it from the data layer, which this module must not depend on.
+ */
+fun interface LlmConnectionSource {
+    suspend fun current(): LlmConnection
 }
