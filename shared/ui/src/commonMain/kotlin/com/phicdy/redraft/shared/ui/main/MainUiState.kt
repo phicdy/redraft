@@ -15,6 +15,8 @@ data class MainUiState(
     /** Purpose and politeness sent with the request. */
     val writingContext: WritingContext = WritingContext(),
     val result: ResultState = ResultState.Idle,
+    /** The last result could not be saved to history. It is still shown. */
+    val historySaveFailed: Boolean = false,
 ) {
     val mode: InputMode?
         get() = selectedMode ?: detectedMode

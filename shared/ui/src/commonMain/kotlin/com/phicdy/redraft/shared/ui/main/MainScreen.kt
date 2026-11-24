@@ -120,6 +120,13 @@ internal fun MainContent(
                     }
                 }
                 RunRow(uiState = uiState, onSubmit = onSubmit, onCancel = onCancel)
+                if (uiState.historySaveFailed) {
+                    Text(
+                        text = "履歴に保存できませんでした",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 ResultArea(result = uiState.result)
             }
         }
