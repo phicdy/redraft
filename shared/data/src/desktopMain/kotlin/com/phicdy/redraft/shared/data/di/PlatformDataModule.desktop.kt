@@ -5,9 +5,14 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.room.Room
 import com.phicdy.redraft.shared.data.ApiKeyStore
 import com.phicdy.redraft.shared.data.InMemoryApiKeyStore
 import com.phicdy.redraft.shared.data.MacKeychainApiKeyStore
+import com.phicdy.redraft.shared.data.history.db.HISTORY_DATABASE_FILE_NAME
+import com.phicdy.redraft.shared.data.history.db.HistoryDatabase
+import com.phicdy.redraft.shared.data.history.db.buildHistoryDatabase
+import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.io.File
@@ -24,6 +29,11 @@ internal actual val platformDataModule: Module = module {
             produceFile = { File(settingsDirectory(), SETTINGS_FILE_NAME).also { it.parentFile?.mkdirs() } },
         )
     }
+    single<HistoryDatabase> {
+        val file = File(dataDirectory(), HISTORY_DATABASE_FILE_NAME).also { it.parentFile?.mkdirs() }
+        Room.databaseBuilder<HistoryDatabase>(name = file.absolutePath)
+            .buildHistoryDatabase(queryContext = Dispatchers.IO)
+    }
 }
 
 private fun isMacOs(): Boolean = System.getProperty("os.name").orEmpty().startsWith("Mac", ignoreCase = true)
@@ -36,4 +46,16 @@ private fun settingsDirectory(): File {
     } else {
         File(home, ".config/redraft")
     }
+}
+
+/**
+ * Where user data such as history lives: `~/Library/Application Support/Redraft` on macOS (next to the
+ * settings), and `$XDG_DATA_HOME/redraft` (default `~/.local/share/redraft`) elsewhere. Not the temp
+ * directory, which the OS may clear.
+ */
+private fun dataDirectory(): File {
+    if (isMacOs()) return settingsDirectory()
+    val xdgDataHome = System.getenv("XDG_DATA_HOME")?.takeIf { it.isNotBlank() }
+    val base = xdgDataHome?.let(::File) ?: File(System.getProperty("user.home"), ".local/share")
+    return File(base, "redraft")
 }

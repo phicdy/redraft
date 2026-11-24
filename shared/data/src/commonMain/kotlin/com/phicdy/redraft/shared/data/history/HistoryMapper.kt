@@ -3,6 +3,7 @@ package com.phicdy.redraft.shared.data.history
 import com.phicdy.redraft.shared.data.history.db.FindingKind
 import com.phicdy.redraft.shared.data.history.db.HistoryEntryEntity
 import com.phicdy.redraft.shared.data.history.db.HistoryFindingEntity
+import com.phicdy.redraft.shared.data.history.db.HistorySummaryRow
 import com.phicdy.redraft.shared.model.ErrorCategory
 import com.phicdy.redraft.shared.model.InputMode
 import com.phicdy.redraft.shared.model.ProofreadResult
@@ -146,6 +147,36 @@ internal object HistoryMapper {
             usage = HistoryUsage(inputTokens = entity.inputTokens, outputTokens = entity.outputTokens),
             result = result,
         )
+    }
+
+    fun toSummary(row: HistorySummaryRow): HistoryEntrySummary? = modes.keyFor(row.mode)?.let { mode ->
+        HistoryEntrySummary(
+            id = row.id,
+            createdAt = Instant.fromEpochMilliseconds(row.createdAt),
+            mode = mode,
+            input = row.inputText,
+            output = row.resultText,
+            errorCount = row.errorCount,
+            improvementCount = row.improvementCount,
+            grammarPointCount = row.grammarPointCount,
+            expressionCount = row.expressionCount,
+        )
+    }
+
+    /**
+     * A LIKE pattern (escape character `\`) matching [query] anywhere, or null for a blank query.
+     * `%` and `_` in the query are matched literally.
+     */
+    fun containsPattern(query: String?): String? {
+        val trimmed = query?.trim()
+        if (trimmed.isNullOrEmpty()) return null
+        val escaped = buildString {
+            for (char in trimmed) {
+                if (char == '\\' || char == '%' || char == '_') append('\\')
+                append(char)
+            }
+        }
+        return "%$escaped%"
     }
 
     private fun HistoryResult.outputText(): String = when (this) {
