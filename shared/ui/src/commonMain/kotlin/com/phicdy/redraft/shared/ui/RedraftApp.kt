@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.phicdy.redraft.shared.ui.history.HistoryScreen
 import com.phicdy.redraft.shared.ui.main.MainScreen
+import com.phicdy.redraft.shared.ui.report.ReportScreen
 import com.phicdy.redraft.shared.ui.settings.SettingsScreen
 import com.phicdy.redraft.shared.ui.theme.RedraftTheme
 
@@ -30,11 +31,15 @@ fun RedraftApp() {
         when (destination) {
             Destination.Main -> MainDestination(
                 onOpenHistory = { destination = Destination.History },
+                onOpenReport = { destination = Destination.Report },
                 onOpenSettings = { destination = Destination.Settings },
             )
 
             // HistoryScreen handles system back itself, because back first closes an open entry.
             Destination.History -> HistoryScreen(onBack = backToMain)
+
+            // ReportScreen also handles system back itself, because back first closes an open report.
+            Destination.Report -> ReportScreen(onBack = backToMain)
 
             Destination.Settings -> {
                 PlatformBackHandler(onBack = backToMain)
@@ -47,18 +52,20 @@ fun RedraftApp() {
 private enum class Destination {
     Main,
     History,
+    Report,
     Settings,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainDestination(onOpenHistory: () -> Unit, onOpenSettings: () -> Unit) {
+private fun MainDestination(onOpenHistory: () -> Unit, onOpenReport: () -> Unit, onOpenSettings: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Redraft") },
                 actions = {
                     TextButton(onClick = onOpenHistory) { Text("履歴") }
+                    TextButton(onClick = onOpenReport) { Text("レポート") }
                     TextButton(onClick = onOpenSettings) { Text("設定") }
                 },
             )
