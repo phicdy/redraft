@@ -1,5 +1,10 @@
 package com.phicdy.redraft.shared.ui.main
 
+import com.phicdy.redraft.shared.data.history.HistoryContext
+import com.phicdy.redraft.shared.data.history.HistoryPoliteness
+import com.phicdy.redraft.shared.data.history.HistoryPurpose
+import com.phicdy.redraft.shared.data.history.HistoryResult
+import com.phicdy.redraft.shared.data.history.HistoryUsage
 import com.phicdy.redraft.shared.llm.LlmError
 import com.phicdy.redraft.shared.llm.WritingAssistant
 import com.phicdy.redraft.shared.llm.prompt.Politeness
@@ -7,6 +12,7 @@ import com.phicdy.redraft.shared.llm.prompt.Prompts
 import com.phicdy.redraft.shared.llm.prompt.WritingContext
 import com.phicdy.redraft.shared.llm.prompt.WritingPurpose
 import com.phicdy.redraft.shared.model.InputMode
+import com.phicdy.redraft.shared.ui.history.FakeHistoryRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,6 +36,7 @@ import kotlin.test.assertTrue
 class MainViewModelTest {
     private val dispatcher: TestDispatcher = StandardTestDispatcher()
     private val client = FakeLlmClient()
+    private val history = FakeHistoryRepository()
 
     @BeforeTest
     fun setUp() {
@@ -41,7 +48,8 @@ class MainViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): MainViewModel = MainViewModel(WritingAssistant(client = client))
+    private fun createViewModel(): MainViewModel =
+        MainViewModel(writingAssistant = WritingAssistant(client = client), historyRepository = history)
 
     @Test
     fun japaneseInputIsTranslated(): TestResult = runTest(dispatcher) {
@@ -267,6 +275,81 @@ class MainViewModelTest {
         val second = assertIs<ResultState.Proofread>(viewModel.uiState.value.result)
         assertEquals(edited, second.input)
         assertEquals(2, client.requests.size)
+    }
+
+    @Test
+    fun successfulTranslationIsSavedToHistory(): TestResult = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        viewModel.onPurposeSelect(WritingPurpose.Email)
+        viewModel.onPolitenessSelect(Politeness.Formal)
+        viewModel.onInputChange(JAPANESE)
+        viewModel.submit()
+        advanceUntilIdle()
+
+        val saved = history.entries.value.single()
+        assertEquals(JAPANESE, saved.input)
+        assertEquals(HistoryContext(purpose = HistoryPurpose.Email, politeness = HistoryPoliteness.Formal), saved.context)
+        assertEquals(HistoryResult.Translation(client.translation), saved.result)
+        assertEquals("fake-model", saved.model)
+        assertEquals(HistoryUsage(inputTokens = 10, outputTokens = 20), saved.usage)
+    }
+
+    @Test
+    fun successfulProofreadingIsSavedToHistory(): TestResult = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        viewModel.onInputChange(ENGLISH)
+        viewModel.submit()
+        advanceUntilIdle()
+
+        val saved = history.entries.value.single()
+        assertEquals(ENGLISH, saved.input)
+        assertEquals(HistoryResult.Proofread(client.proofread), saved.result)
+    }
+
+    @Test
+    fun failedRequestIsNotSaved(): TestResult = runTest(dispatcher) {
+        client.llmError = LlmError.MissingApiKey
+        val viewModel = createViewModel()
+        viewModel.onInputChange(JAPANESE)
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertTrue(history.entries.value.isEmpty())
+    }
+
+    @Test
+    fun cancelledRequestIsNotSaved(): TestResult = runTest(dispatcher) {
+        client.gate = CompletableDeferred()
+        val viewModel = createViewModel()
+        viewModel.onInputChange(JAPANESE)
+        viewModel.submit()
+        runCurrent()
+
+        viewModel.cancel()
+        client.gate?.complete(Unit)
+        advanceUntilIdle()
+
+        assertTrue(history.entries.value.isEmpty())
+    }
+
+    @Test
+    fun saveFailureKeepsTheResultVisible(): TestResult = runTest(dispatcher) {
+        history.saveFailure = IllegalStateException("disk full")
+        val viewModel = createViewModel()
+        viewModel.onInputChange(ENGLISH)
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertIs<ResultState.Proofread>(viewModel.uiState.value.result)
+        assertTrue(viewModel.uiState.value.historySaveFailed)
+
+        // The notice is about the last result only; a new request clears it.
+        history.saveFailure = null
+        viewModel.submit()
+        assertFalse(viewModel.uiState.value.historySaveFailed)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.historySaveFailed)
+        assertEquals(1, history.entries.value.size)
     }
 
     private companion object {
