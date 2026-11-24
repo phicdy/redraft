@@ -54,4 +54,42 @@ abstract class HistoryDao {
         """,
     )
     abstract fun observeSummaries(pattern: String?): Flow<List<HistorySummaryRow>>
+
+    @Query(
+        """
+        SELECT mode, COUNT(*) AS item_count FROM history_entry
+        WHERE deleted_at IS NULL AND created_at >= :from AND created_at < :until
+        GROUP BY mode
+        """,
+    )
+    abstract suspend fun countEntries(from: Long, until: Long): List<ModeCountRow>
+
+    /** Findings of [kind] in non-deleted entries per (category, severity). */
+    @Query(
+        """
+        SELECT f.category, f.severity, COUNT(*) AS item_count
+        FROM history_finding f INNER JOIN history_entry e ON e.id = f.entry_id
+        WHERE e.deleted_at IS NULL AND f.kind = :kind AND f.created_at >= :from AND f.created_at < :until
+        GROUP BY f.category, f.severity
+        """,
+    )
+    abstract suspend fun countFindings(kind: String, from: Long, until: Long): List<FindingCountRow>
+
+    @Query(
+        """
+        SELECT f.* FROM history_finding f INNER JOIN history_entry e ON e.id = f.entry_id
+        WHERE e.deleted_at IS NULL AND f.kind = :kind AND f.created_at >= :from AND f.created_at < :until
+        ORDER BY f.created_at, f.entry_id, f.position
+        """,
+    )
+    abstract suspend fun getFindingsInRange(kind: String, from: Long, until: Long): List<HistoryFindingEntity>
+
+    /** Reads all totals from one consistent snapshot. */
+    @Transaction
+    open suspend fun aggregate(from: Long, until: Long): AggregationRows = AggregationRows(
+        modeCounts = countEntries(from, until),
+        issueCounts = countFindings(FindingKind.ISSUE, from, until),
+        grammarPointCounts = countFindings(FindingKind.GRAMMAR_POINT, from, until),
+        expressions = getFindingsInRange(FindingKind.EXPRESSION, from, until),
+    )
 }

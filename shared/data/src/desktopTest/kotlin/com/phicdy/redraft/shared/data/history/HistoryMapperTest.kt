@@ -1,7 +1,10 @@
 package com.phicdy.redraft.shared.data.history
 
+import com.phicdy.redraft.shared.data.history.db.AggregationRows
+import com.phicdy.redraft.shared.data.history.db.FindingCountRow
 import com.phicdy.redraft.shared.data.history.db.FindingKind
 import com.phicdy.redraft.shared.data.history.db.FindingSeverity
+import com.phicdy.redraft.shared.data.history.db.ModeCountRow
 import com.phicdy.redraft.shared.model.ErrorCategory
 import com.phicdy.redraft.shared.model.InputMode
 import com.phicdy.redraft.shared.model.Severity
@@ -114,5 +117,25 @@ class HistoryMapperTest {
         assertNull(HistoryMapper.containsPattern("  "))
         assertEquals("%meeting%", HistoryMapper.containsPattern(" meeting "))
         assertEquals("%100\\%\\_a\\\\b%", HistoryMapper.containsPattern("100%_a\\b"))
+    }
+
+    @Test
+    fun aggregationSkipsValuesUnknownToThisVersion() {
+        val rows = AggregationRows(
+            modeCounts = listOf(ModeCountRow(mode = "proofread", count = 2), ModeCountRow(mode = "summarize", count = 5)),
+            issueCounts = listOf(
+                FindingCountRow(category = "tense", severity = "error", count = 1),
+                FindingCountRow(category = "future_category", severity = "error", count = 4),
+                FindingCountRow(category = "tense", severity = "critical", count = 3),
+            ),
+            grammarPointCounts = listOf(FindingCountRow(category = "future_category", severity = null, count = 1)),
+            expressions = emptyList(),
+        )
+
+        val aggregation = HistoryMapper.toAggregation(rows)
+
+        assertEquals(mapOf(InputMode.Translate to 0, InputMode.Proofread to 2), aggregation.entryCounts)
+        assertEquals(listOf(IssueCount(ErrorCategory.Tense, Severity.Error, 1)), aggregation.issueCounts)
+        assertEquals(emptyList(), aggregation.grammarPointCounts)
     }
 }

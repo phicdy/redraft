@@ -1,5 +1,7 @@
 package com.phicdy.redraft.shared.data.history
 
+import com.phicdy.redraft.shared.data.history.db.AggregationRows
+import com.phicdy.redraft.shared.data.history.db.FindingCountRow
 import com.phicdy.redraft.shared.data.history.db.FindingKind
 import com.phicdy.redraft.shared.data.history.db.HistoryEntryEntity
 import com.phicdy.redraft.shared.data.history.db.HistoryFindingEntity
@@ -163,6 +165,33 @@ internal object HistoryMapper {
         )
     }
 
+    fun toAggregation(rows: AggregationRows): HistoryAggregation {
+        val modeCounts = rows.modeCounts.associate { it.mode to it.count }
+        return HistoryAggregation(
+            entryCounts = InputMode.entries.associateWith { mode -> modeCounts[modeValue(mode)] ?: 0 },
+            issueCounts = rows.issueCounts
+                .mapNotNull { row ->
+                    val category = row.category?.let { categories.keyFor(it) } ?: return@mapNotNull null
+                    val severity = row.severity?.let { severities.keyFor(it) } ?: return@mapNotNull null
+                    IssueCount(category = category, severity = severity, count = row.count)
+                }
+                .sortedWith(compareByDescending<IssueCount> { it.count }.thenBy { it.category }.thenBy { it.severity }),
+            grammarPointCounts = rows.grammarPointCounts
+                .mapNotNull { row -> row.categoryOrNull()?.let { GrammarPointCount(category = it, count = row.count) } }
+                .sortedWith(compareByDescending<GrammarPointCount> { it.count }.thenBy { it.category }),
+            expressions = rows.expressions.mapNotNull { row ->
+                val type = row.expressionType?.let { expressionTypes.keyFor(it) } ?: return@mapNotNull null
+                LearnedExpression(
+                    entryId = row.entryId,
+                    createdAt = Instant.fromEpochMilliseconds(row.createdAt),
+                    expression = row.text,
+                    type = type,
+                    meaning = row.detail.orEmpty(),
+                )
+            },
+        )
+    }
+
     /**
      * A LIKE pattern (escape character `\`) matching [query] anywhere, or null for a blank query.
      * `%` and `_` in the query are matched literally.
@@ -178,6 +207,8 @@ internal object HistoryMapper {
         }
         return "%$escaped%"
     }
+
+    private fun FindingCountRow.categoryOrNull(): ErrorCategory? = category?.let { categories.keyFor(it) }
 
     private fun HistoryResult.outputText(): String = when (this) {
         is HistoryResult.Translation -> result.translation
