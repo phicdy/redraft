@@ -11,6 +11,7 @@ import com.phicdy.redraft.shared.llm.di.llmModule
 import com.phicdy.redraft.shared.llm.openai.OpenAiDefaults
 import com.phicdy.redraft.shared.ui.history.HistoryViewModel
 import com.phicdy.redraft.shared.ui.main.MainViewModel
+import com.phicdy.redraft.shared.ui.report.WeeklyReportGenerator
 import com.phicdy.redraft.shared.ui.settings.SettingsViewModel
 import kotlinx.coroutines.flow.first
 import org.koin.core.module.Module
@@ -21,6 +22,9 @@ val uiModule: Module = module {
     viewModelOf(::MainViewModel)
     viewModelOf(::SettingsViewModel)
     viewModelOf(::HistoryViewModel)
+    single<WeeklyReportGenerator> {
+        WeeklyReportGenerator(historyRepository = get(), reportRepository = get(), reportWriter = get())
+    }
 }
 
 /**
