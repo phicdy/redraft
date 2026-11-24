@@ -1,6 +1,11 @@
 package com.phicdy.redraft.shared.ui.screenshot
 
 import androidx.compose.runtime.Composable
+import com.phicdy.redraft.shared.ui.history.HistoryContentEmptyPreview
+import com.phicdy.redraft.shared.ui.history.HistoryContentListPreview
+import com.phicdy.redraft.shared.ui.history.HistoryContentNoResultsPreview
+import com.phicdy.redraft.shared.ui.history.HistoryContentProofreadDetailPreview
+import com.phicdy.redraft.shared.ui.history.HistoryContentTranslationDetailPreview
 import com.phicdy.redraft.shared.ui.main.MainContentEmptyPreview
 import com.phicdy.redraft.shared.ui.main.MainContentErrorPreview
 import com.phicdy.redraft.shared.ui.main.MainContentLoadingPreview
@@ -37,4 +42,9 @@ internal val previewCatalog: List<PreviewEntry> = listOf(
     PreviewEntry("SettingsContentEmpty") { SettingsContentEmptyPreview() },
     PreviewEntry("SettingsContentKeySaved") { SettingsContentKeySavedPreview() },
     PreviewEntry("SettingsContentValidationError") { SettingsContentValidationErrorPreview() },
+    PreviewEntry("HistoryContentList") { HistoryContentListPreview() },
+    PreviewEntry("HistoryContentEmpty") { HistoryContentEmptyPreview() },
+    PreviewEntry("HistoryContentNoResults") { HistoryContentNoResultsPreview() },
+    PreviewEntry("HistoryContentTranslationDetail") { HistoryContentTranslationDetailPreview() },
+    PreviewEntry("HistoryContentProofreadDetail") { HistoryContentProofreadDetailPreview() },
 )

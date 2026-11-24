@@ -25,15 +25,15 @@ import com.phicdy.redraft.shared.ui.main.result.ProofreadResultView
 import com.phicdy.redraft.shared.ui.main.result.TranslationResultView
 import com.phicdy.redraft.shared.ui.theme.RedraftTheme
 
-private const val SAMPLE_JAPANESE = "来週の定例会議を金曜日の午後に変更できますか？資料は前日までに共有します。"
+internal const val SAMPLE_JAPANESE = "来週の定例会議を金曜日の午後に変更できますか？資料は前日までに共有します。"
 
-private const val SAMPLE_ENGLISH =
+internal const val SAMPLE_ENGLISH =
     "I look forward to see you in the meeting tomorrow. " +
         "Please let me know if you have any question about informations."
 
-private val sampleUsage = TokenUsage(inputTokens = 1_234, outputTokens = 567)
+internal val sampleUsage = TokenUsage(inputTokens = 1_234, outputTokens = 567)
 
-private val sampleTranslation = TranslationResult(
+internal val sampleTranslation = TranslationResult(
     translation = "Could we move next week's regular meeting to Friday afternoon? " +
         "I'll share the materials by the day before.",
     alternatives = listOf(
@@ -78,7 +78,7 @@ private val sampleTranslation = TranslationResult(
     ),
 )
 
-private val sampleProofread = ProofreadResult(
+internal val sampleProofread = ProofreadResult(
     correctedText = "I look forward to seeing you at the meeting tomorrow. " +
         "Please let me know if you have any questions about the information.",
     issues = listOf(

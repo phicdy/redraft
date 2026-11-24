@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.phicdy.redraft.shared.ui.history.HistoryScreen
 import com.phicdy.redraft.shared.ui.main.MainScreen
 import com.phicdy.redraft.shared.ui.settings.SettingsScreen
 import com.phicdy.redraft.shared.ui.theme.RedraftTheme
@@ -22,26 +23,42 @@ import com.phicdy.redraft.shared.ui.theme.RedraftTheme
 /** Root composable shared by the Android and desktop apps. Koin must be started before this. */
 @Composable
 fun RedraftApp() {
-    // Two screens only, so a plain state switch is enough; no navigation library.
-    var showSettings by rememberSaveable { mutableStateOf(false) }
+    // A few screens one level below the main screen, so a plain state switch is enough; no navigation library.
+    var destination by rememberSaveable { mutableStateOf(Destination.Main) }
+    val backToMain = { destination = Destination.Main }
     RedraftTheme {
-        if (showSettings) {
-            PlatformBackHandler(onBack = { showSettings = false })
-            SettingsScreen(onBack = { showSettings = false })
-        } else {
-            MainDestination(onOpenSettings = { showSettings = true })
+        when (destination) {
+            Destination.Main -> MainDestination(
+                onOpenHistory = { destination = Destination.History },
+                onOpenSettings = { destination = Destination.Settings },
+            )
+
+            // HistoryScreen handles system back itself, because back first closes an open entry.
+            Destination.History -> HistoryScreen(onBack = backToMain)
+
+            Destination.Settings -> {
+                PlatformBackHandler(onBack = backToMain)
+                SettingsScreen(onBack = backToMain)
+            }
         }
     }
 }
 
+private enum class Destination {
+    Main,
+    History,
+    Settings,
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainDestination(onOpenSettings: () -> Unit) {
+private fun MainDestination(onOpenHistory: () -> Unit, onOpenSettings: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Redraft") },
                 actions = {
+                    TextButton(onClick = onOpenHistory) { Text("履歴") }
                     TextButton(onClick = onOpenSettings) { Text("設定") }
                 },
             )
