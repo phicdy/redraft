@@ -15,6 +15,12 @@ import com.phicdy.redraft.shared.ui.main.MainContentTranslatePreview
 import com.phicdy.redraft.shared.ui.main.MainContentTranslationResultPreview
 import com.phicdy.redraft.shared.ui.main.ProofreadResultViewPreview
 import com.phicdy.redraft.shared.ui.main.TranslationResultViewPreview
+import com.phicdy.redraft.shared.ui.report.ReportContentDetailPreview
+import com.phicdy.redraft.shared.ui.report.ReportContentEmptyPreview
+import com.phicdy.redraft.shared.ui.report.ReportContentErrorPreview
+import com.phicdy.redraft.shared.ui.report.ReportContentGeneratingPreview
+import com.phicdy.redraft.shared.ui.report.ReportContentListPreview
+import com.phicdy.redraft.shared.ui.report.ReportContentNoEntriesPreview
 import com.phicdy.redraft.shared.ui.report.ReportDetailCompletedPreview
 import com.phicdy.redraft.shared.ui.report.ReportDetailPartialPreview
 import com.phicdy.redraft.shared.ui.settings.SettingsContentEmptyPreview
@@ -49,6 +55,12 @@ internal val previewCatalog: List<PreviewEntry> = listOf(
     PreviewEntry("HistoryContentNoResults") { HistoryContentNoResultsPreview() },
     PreviewEntry("HistoryContentTranslationDetail") { HistoryContentTranslationDetailPreview() },
     PreviewEntry("HistoryContentProofreadDetail") { HistoryContentProofreadDetailPreview() },
+    PreviewEntry("ReportContentList") { ReportContentListPreview() },
+    PreviewEntry("ReportContentEmpty") { ReportContentEmptyPreview() },
+    PreviewEntry("ReportContentGenerating") { ReportContentGeneratingPreview() },
+    PreviewEntry("ReportContentNoEntries") { ReportContentNoEntriesPreview() },
+    PreviewEntry("ReportContentError") { ReportContentErrorPreview() },
+    PreviewEntry("ReportContentDetail") { ReportContentDetailPreview() },
     PreviewEntry("ReportDetailCompleted") { ReportDetailCompletedPreview() },
     PreviewEntry("ReportDetailPartial") { ReportDetailPartialPreview() },
 )
