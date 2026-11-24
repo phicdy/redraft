@@ -1,7 +1,10 @@
 package com.phicdy.redraft.shared.data.history
 
 import com.phicdy.redraft.shared.data.history.db.inMemoryHistoryDatabase
+import com.phicdy.redraft.shared.model.ErrorCategory
 import com.phicdy.redraft.shared.model.InputMode
+import com.phicdy.redraft.shared.model.Severity
+import com.phicdy.redraft.shared.model.TranslationResult
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestResult
@@ -114,6 +117,55 @@ class RoomHistoryRepositoryTest {
 
         assertNull(repository.get(deleted.id))
         assertEquals(listOf(kept.id), repository.observeEntries().first().map { it.id })
+        val aggregation = repository.aggregate(Instant.fromEpochMilliseconds(DAY_1), Instant.fromEpochMilliseconds(DAY_2))
+        assertEquals(mapOf(InputMode.Translate to 0, InputMode.Proofread to 1), aggregation.entryCounts)
+        assertEquals(listOf(1, 1), aggregation.issueCounts.map { it.count })
+        assertTrue(aggregation.grammarPointCounts.isEmpty())
+        assertTrue(aggregation.expressions.isEmpty())
+    }
+
+    @Test
+    fun aggregationCountsOnlyTheRange(): TestResult = runTest {
+        saveAt(DAY_1 - 1, HistorySamples.proofread) // before the range
+        saveAt(DAY_1, HistorySamples.proofread) // the start is inclusive
+        saveAt(DAY_1 + 10, HistorySamples.proofread)
+        val translation = saveAt(DAY_2 - 1, HistorySamples.translation)
+        saveAt(DAY_2, HistorySamples.translation) // the end is exclusive
+
+        val aggregation = repository.aggregate(Instant.fromEpochMilliseconds(DAY_1), Instant.fromEpochMilliseconds(DAY_2))
+
+        assertEquals(mapOf(InputMode.Translate to 1, InputMode.Proofread to 2), aggregation.entryCounts)
+        assertEquals(
+            listOf(
+                IssueCount(ErrorCategory.VerbForm, Severity.Error, 2),
+                IssueCount(ErrorCategory.Naturalness, Severity.Improvement, 2),
+            ),
+            aggregation.issueCounts,
+        )
+        assertEquals(
+            listOf(GrammarPointCount(ErrorCategory.Tense, 1), GrammarPointCount(ErrorCategory.Preposition, 1)),
+            aggregation.grammarPointCounts,
+        )
+        assertEquals(
+            listOf(
+                LearnedExpression(
+                    entryId = translation.id,
+                    createdAt = Instant.fromEpochMilliseconds(DAY_2 - 1),
+                    expression = "move the meeting",
+                    type = TranslationResult.ExpressionType.Phrase,
+                    meaning = "会議を移動する",
+                ),
+            ),
+            aggregation.expressions,
+        )
+    }
+
+    @Test
+    fun emptyRangeHasZeroCounts(): TestResult = runTest {
+        val aggregation = repository.aggregate(Instant.fromEpochMilliseconds(DAY_1), Instant.fromEpochMilliseconds(DAY_2))
+
+        assertEquals(mapOf(InputMode.Translate to 0, InputMode.Proofread to 0), aggregation.entryCounts)
+        assertTrue(aggregation.issueCounts.isEmpty())
     }
 
     private fun HistoryEntrySummary.counts(): List<Int> =

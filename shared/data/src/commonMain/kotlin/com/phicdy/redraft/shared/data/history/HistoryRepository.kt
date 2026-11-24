@@ -1,6 +1,7 @@
 package com.phicdy.redraft.shared.data.history
 
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Instant
 
 /** Local history of completed translations and proofreading. */
 interface HistoryRepository {
@@ -24,6 +25,9 @@ interface HistoryRepository {
 
     /** Soft-deletes the entry: it disappears from lists, lookups and aggregation. */
     suspend fun delete(id: String)
+
+    /** Totals for entries created in [from] (inclusive) until [until] (exclusive). */
+    suspend fun aggregate(from: Instant, until: Instant): HistoryAggregation
 }
 
 /** The id of this install, generated once and kept. */

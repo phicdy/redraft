@@ -1,5 +1,6 @@
 package com.phicdy.redraft.shared.data.history
 
+import com.phicdy.redraft.shared.model.ErrorCategory
 import com.phicdy.redraft.shared.model.InputMode
 import com.phicdy.redraft.shared.model.ProofreadResult
 import com.phicdy.redraft.shared.model.Severity
@@ -77,4 +78,35 @@ data class HistoryEntrySummary(
     val improvementCount: Int,
     val grammarPointCount: Int,
     val expressionCount: Int,
+)
+
+/** Totals over a time range for the weekly report. Deleted entries are not counted. */
+data class HistoryAggregation(
+    /** Number of entries per mode; every mode is present, with 0 when there were none. */
+    val entryCounts: Map<InputMode, Int>,
+    /** Proofread issues per (category, severity), most frequent first. */
+    val issueCounts: List<IssueCount>,
+    /** Translation grammar points per category, most frequent first. */
+    val grammarPointCounts: List<GrammarPointCount>,
+    /** Expressions from translations, oldest first. */
+    val expressions: List<LearnedExpression>,
+)
+
+data class IssueCount(
+    val category: ErrorCategory,
+    val severity: Severity,
+    val count: Int,
+)
+
+data class GrammarPointCount(
+    val category: ErrorCategory,
+    val count: Int,
+)
+
+data class LearnedExpression(
+    val entryId: String,
+    val createdAt: Instant,
+    val expression: String,
+    val type: TranslationResult.ExpressionType,
+    val meaning: String,
 )

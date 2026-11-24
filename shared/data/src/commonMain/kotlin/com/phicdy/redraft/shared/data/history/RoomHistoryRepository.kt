@@ -46,4 +46,7 @@ class RoomHistoryRepository(
     override suspend fun delete(id: String) {
         dao.markDeleted(id, deletedAt = clock.now().toEpochMilliseconds())
     }
+
+    override suspend fun aggregate(from: Instant, until: Instant): HistoryAggregation =
+        HistoryMapper.toAggregation(dao.aggregate(from.toEpochMilliseconds(), until.toEpochMilliseconds()))
 }
