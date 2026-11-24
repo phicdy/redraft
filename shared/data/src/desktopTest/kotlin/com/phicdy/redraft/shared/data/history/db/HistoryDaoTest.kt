@@ -5,7 +5,9 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class HistoryDaoTest {
     private val database = inMemoryHistoryDatabase()
@@ -27,6 +29,16 @@ class HistoryDaoTest {
 
         assertEquals(ENTRY, dao.getEntry(ENTRY.id))
         assertEquals(listOf("f1", "f2"), dao.getFindings(ENTRY.id).map { it.id })
+    }
+
+    @Test
+    fun failedFindingInsertRollsBackTheEntry(): TestResult = runTest {
+        val duplicate = finding(id = "same", kind = FindingKind.ISSUE, position = 0)
+
+        assertFailsWith<Exception> { dao.insert(ENTRY, listOf(duplicate, duplicate)) }
+
+        assertNull(dao.getEntry(ENTRY.id))
+        assertTrue(dao.getFindings(ENTRY.id).isEmpty())
     }
 
     @Test
