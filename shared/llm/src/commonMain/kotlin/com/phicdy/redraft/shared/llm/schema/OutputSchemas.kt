@@ -5,11 +5,12 @@ import com.phicdy.redraft.shared.model.ErrorCategory
 import com.phicdy.redraft.shared.model.ProofreadResult
 import com.phicdy.redraft.shared.model.Severity
 import com.phicdy.redraft.shared.model.TranslationResult
+import com.phicdy.redraft.shared.model.WeeklyReportNarrative
 import kotlinx.serialization.json.JsonObject
 
 /**
- * JSON schemas for structured output. They mirror [TranslationResult] and [ProofreadResult]
- * field by field; `OutputSchemasTest` checks that they stay in sync with the serializers.
+ * JSON schemas for structured output. They mirror [TranslationResult], [ProofreadResult] and
+ * [WeeklyReportNarrative] field by field; `OutputSchemasTest` checks that they stay in sync with the serializers.
  *
  * Count limits (e.g. at most five expressions) are stated in the prompt, not here, and
  * descriptions only say which language a field is written in.
@@ -75,6 +76,43 @@ object OutputSchemas {
                 "More natural rewrites. Empty if the text is already natural.",
             ),
             "overall_comment" to stringSchema("A short overall comment in Japanese."),
+        ),
+    )
+
+    val weeklyReport: OutputSchema = OutputSchema(
+        name = "weekly_report_narrative",
+        schema = objectSchema(
+            "summary" to stringSchema("Overview of the week compared with the week before, in Japanese."),
+            "recurring_mistakes" to arraySchema(
+                objectSchema(
+                    "category" to categorySchema(),
+                    "pattern" to stringSchema("What keeps going wrong, in Japanese."),
+                    "examples" to arraySchema(
+                        objectSchema(
+                            "original" to stringSchema("The original span copied from an issue sample, in English."),
+                            "suggestion" to stringSchema("The suggestion copied from the same issue sample, in English."),
+                        ),
+                        "Real examples from the issue samples.",
+                    ),
+                    "advice" to stringSchema("How to avoid the mistake, in Japanese."),
+                ),
+                "Mistakes that came up more than once this week. Empty if there are none.",
+            ),
+            "improvements" to arraySchema(
+                stringSchema("One improvement, in Japanese."),
+                "What got better compared with the week before. Empty if the data shows none.",
+            ),
+            "focus_next_week" to arraySchema(
+                stringSchema("One concrete thing to practice, in Japanese."),
+                "What to focus on next week.",
+            ),
+            "expressions_to_review" to arraySchema(
+                objectSchema(
+                    "expression" to stringSchema("The expression copied from the stats, in English."),
+                    "note" to stringSchema("Why and how to use it, in Japanese."),
+                ),
+                "Expressions from this week worth reviewing. Empty if there are none.",
+            ),
         ),
     )
 

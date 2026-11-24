@@ -4,6 +4,7 @@ import com.phicdy.redraft.shared.llm.OutputSchema
 import com.phicdy.redraft.shared.model.ErrorCategory
 import com.phicdy.redraft.shared.model.ProofreadResult
 import com.phicdy.redraft.shared.model.TranslationResult
+import com.phicdy.redraft.shared.model.WeeklyReportNarrative
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -39,6 +40,11 @@ class OutputSchemasTest {
     }
 
     @Test
+    fun weeklyReportSchemaMatchesModel() {
+        assertMatches(WeeklyReportNarrative.serializer().descriptor, OutputSchemas.weeklyReport.schema, "$")
+    }
+
+    @Test
     fun categoryEnumListsEverySerialName() {
         val expected = listOf(
             "article", "number", "tense", "agreement", "preposition", "verb_form", "word_order",
@@ -53,7 +59,7 @@ class OutputSchemasTest {
     @Test
     fun schemaNamesAreValidForOpenAi() {
         val allowed = Regex("^[a-zA-Z0-9_-]{1,64}$")
-        listOf(OutputSchemas.translation, OutputSchemas.proofread).map(OutputSchema::name).forEach { name ->
+        listOf(OutputSchemas.translation, OutputSchemas.proofread, OutputSchemas.weeklyReport).map(OutputSchema::name).forEach { name ->
             assertTrue(allowed.matches(name), name)
         }
     }
