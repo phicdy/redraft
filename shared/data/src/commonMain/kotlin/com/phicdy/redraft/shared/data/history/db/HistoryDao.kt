@@ -84,6 +84,17 @@ abstract class HistoryDao {
     )
     abstract suspend fun getFindingsInRange(kind: String, from: Long, until: Long): List<HistoryFindingEntity>
 
+    /** Non-deleted entries of [mode] in the range, newest first, at most [limit]. */
+    @Query(
+        """
+        SELECT * FROM history_entry
+        WHERE deleted_at IS NULL AND mode = :mode AND created_at >= :from AND created_at < :until
+        ORDER BY created_at DESC, id DESC
+        LIMIT :limit
+        """,
+    )
+    abstract suspend fun getEntriesInRange(mode: String, from: Long, until: Long, limit: Int): List<HistoryEntryEntity>
+
     /** Reads all totals from one consistent snapshot. */
     @Transaction
     open suspend fun aggregate(from: Long, until: Long): AggregationRows = AggregationRows(

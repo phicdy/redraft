@@ -1,6 +1,8 @@
 package com.phicdy.redraft.shared.data.history
 
 import com.phicdy.redraft.shared.data.history.db.HistoryDao
+import com.phicdy.redraft.shared.model.InputMode
+import com.phicdy.redraft.shared.model.ProofreadResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
@@ -49,4 +51,14 @@ class RoomHistoryRepository(
 
     override suspend fun aggregate(from: Instant, until: Instant): HistoryAggregation =
         HistoryMapper.toAggregation(dao.aggregate(from.toEpochMilliseconds(), until.toEpochMilliseconds()))
+
+    override suspend fun recentIssues(from: Instant, until: Instant, maxEntries: Int): List<ProofreadResult.Issue> =
+        dao.getEntriesInRange(
+            mode = HistoryMapper.modeValue(InputMode.Proofread),
+            from = from.toEpochMilliseconds(),
+            until = until.toEpochMilliseconds(),
+            limit = maxEntries,
+        )
+            .mapNotNull(HistoryMapper::toEntry)
+            .flatMap { entry -> (entry.result as? HistoryResult.Proofread)?.result?.issues.orEmpty() }
 }

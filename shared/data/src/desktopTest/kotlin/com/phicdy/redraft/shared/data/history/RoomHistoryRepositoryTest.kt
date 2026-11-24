@@ -168,6 +168,26 @@ class RoomHistoryRepositoryTest {
         assertTrue(aggregation.issueCounts.isEmpty())
     }
 
+    @Test
+    fun recentIssuesComeFromTheNewestProofreadingInTheRange(): TestResult = runTest {
+        saveAt(DAY_1 - 1, HistorySamples.proofread) // before the range
+        val older = HistorySamples.proofread.result.copy(issues = HistorySamples.proofread.result.issues.take(1))
+        saveAt(DAY_1, HistoryResult.Proofread(older))
+        saveAt(DAY_1 + 1, HistorySamples.translation)
+        saveAt(DAY_1 + 2, HistorySamples.proofread)
+        val deleted = saveAt(DAY_1 + 3, HistorySamples.proofread)
+        repository.delete(deleted.id)
+        val from = Instant.fromEpochMilliseconds(DAY_1)
+        val until = Instant.fromEpochMilliseconds(DAY_2)
+
+        val all = repository.recentIssues(from, until, maxEntries = 10)
+        val newest = repository.recentIssues(from, until, maxEntries = 1)
+
+        assertEquals(listOf("to see", "I look", "to see"), all.map { it.original })
+        assertEquals(HistorySamples.proofread.result.issues, newest)
+        assertEquals("look forward to の後は動名詞です。", all.first().explanation)
+    }
+
     private fun HistoryEntrySummary.counts(): List<Int> =
         listOf(errorCount, improvementCount, grammarPointCount, expressionCount)
 

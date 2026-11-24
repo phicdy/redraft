@@ -7,6 +7,7 @@ import com.phicdy.redraft.shared.data.history.HistoryEntrySummary
 import com.phicdy.redraft.shared.data.history.HistoryRepository
 import com.phicdy.redraft.shared.data.history.HistoryResult
 import com.phicdy.redraft.shared.data.history.HistoryUsage
+import com.phicdy.redraft.shared.model.ProofreadResult
 import com.phicdy.redraft.shared.model.Severity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +64,9 @@ internal class FakeHistoryRepository : HistoryRepository {
     }
 
     override suspend fun aggregate(from: Instant, until: Instant): HistoryAggregation =
+        error("Not used by the UI")
+
+    override suspend fun recentIssues(from: Instant, until: Instant, maxEntries: Int): List<ProofreadResult.Issue> =
         error("Not used by the UI")
 
     private fun HistoryEntry.toSummary(): HistoryEntrySummary {
