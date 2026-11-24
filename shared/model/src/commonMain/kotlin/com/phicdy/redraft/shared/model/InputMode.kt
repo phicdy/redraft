@@ -1,10 +1,17 @@
 package com.phicdy.redraft.shared.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/** The serial names are stored in weekly reports, so never rename them. */
+@Serializable
 enum class InputMode {
     /** Japanese input: translate into English. */
+    @SerialName("translate")
     Translate,
 
     /** English input: proofread. */
+    @SerialName("proofread")
     Proofread,
 }
 

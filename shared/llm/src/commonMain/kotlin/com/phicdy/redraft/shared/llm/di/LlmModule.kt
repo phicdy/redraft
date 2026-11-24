@@ -2,6 +2,7 @@ package com.phicdy.redraft.shared.llm.di
 
 import com.phicdy.redraft.shared.llm.LlmAdapter
 import com.phicdy.redraft.shared.llm.LlmClient
+import com.phicdy.redraft.shared.llm.ReportWriter
 import com.phicdy.redraft.shared.llm.StructuredLlmClient
 import com.phicdy.redraft.shared.llm.WritingAssistant
 import com.phicdy.redraft.shared.llm.openai.OpenAiResponsesAdapter
@@ -45,4 +46,5 @@ val llmModule: Module = module {
     single<LlmAdapter> { OpenAiResponsesAdapter(httpClient = get(), connectionSource = get()) }
     single<LlmClient> { StructuredLlmClient(adapter = get()) }
     single<WritingAssistant> { WritingAssistant(client = get()) }
+    single<ReportWriter> { ReportWriter(client = get()) }
 }
