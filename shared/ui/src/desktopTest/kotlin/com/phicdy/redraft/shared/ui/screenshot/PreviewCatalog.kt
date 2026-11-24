@@ -15,6 +15,8 @@ import com.phicdy.redraft.shared.ui.main.MainContentTranslatePreview
 import com.phicdy.redraft.shared.ui.main.MainContentTranslationResultPreview
 import com.phicdy.redraft.shared.ui.main.ProofreadResultViewPreview
 import com.phicdy.redraft.shared.ui.main.TranslationResultViewPreview
+import com.phicdy.redraft.shared.ui.report.ReportDetailCompletedPreview
+import com.phicdy.redraft.shared.ui.report.ReportDetailPartialPreview
 import com.phicdy.redraft.shared.ui.settings.SettingsContentEmptyPreview
 import com.phicdy.redraft.shared.ui.settings.SettingsContentKeySavedPreview
 import com.phicdy.redraft.shared.ui.settings.SettingsContentValidationErrorPreview
@@ -47,4 +49,6 @@ internal val previewCatalog: List<PreviewEntry> = listOf(
     PreviewEntry("HistoryContentNoResults") { HistoryContentNoResultsPreview() },
     PreviewEntry("HistoryContentTranslationDetail") { HistoryContentTranslationDetailPreview() },
     PreviewEntry("HistoryContentProofreadDetail") { HistoryContentProofreadDetailPreview() },
+    PreviewEntry("ReportDetailCompleted") { ReportDetailCompletedPreview() },
+    PreviewEntry("ReportDetailPartial") { ReportDetailPartialPreview() },
 )
