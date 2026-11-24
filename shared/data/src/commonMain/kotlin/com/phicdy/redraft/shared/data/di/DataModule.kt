@@ -7,6 +7,8 @@ import com.phicdy.redraft.shared.data.history.DeviceIdProvider
 import com.phicdy.redraft.shared.data.history.HistoryRepository
 import com.phicdy.redraft.shared.data.history.RoomHistoryRepository
 import com.phicdy.redraft.shared.data.history.db.HistoryDatabase
+import com.phicdy.redraft.shared.data.report.RoomWeeklyReportRepository
+import com.phicdy.redraft.shared.data.report.WeeklyReportRepository
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -23,6 +25,9 @@ val dataModule: Module = module {
     single<DeviceIdProvider> { DataStoreDeviceIdProvider(dataStore = get()) }
     single<HistoryRepository> {
         RoomHistoryRepository(dao = get<HistoryDatabase>().historyDao(), deviceIdProvider = get())
+    }
+    single<WeeklyReportRepository> {
+        RoomWeeklyReportRepository(dao = get<HistoryDatabase>().weeklyReportDao(), deviceIdProvider = get())
     }
 }
 
