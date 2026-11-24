@@ -14,10 +14,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlin.time.Instant
 
-/** Keeps entries in memory. Set [saveFailure] to make saving fail. */
+/** Keeps entries in memory. Set [saveFailure] or [deleteFailure] to make those calls fail. */
 internal class FakeHistoryRepository : HistoryRepository {
     val entries = MutableStateFlow<List<HistoryEntry>>(emptyList())
     var saveFailure: Exception? = null
+    var deleteFailure: Exception? = null
     val queries = mutableListOf<String?>()
     val deletedIds = mutableListOf<String>()
     private var nextId = 1
@@ -56,6 +57,7 @@ internal class FakeHistoryRepository : HistoryRepository {
     override suspend fun get(id: String): HistoryEntry? = entries.value.firstOrNull { it.id == id }
 
     override suspend fun delete(id: String) {
+        deleteFailure?.let { throw it }
         deletedIds += id
         entries.update { list -> list.filterNot { it.id == id } }
     }
