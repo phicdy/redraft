@@ -107,4 +107,12 @@ class HistoryMapperTest {
             HistoryMapper.toEntry(entity)?.context,
         )
     }
+
+    @Test
+    fun containsPatternEscapesWildcards() {
+        assertNull(HistoryMapper.containsPattern(null))
+        assertNull(HistoryMapper.containsPattern("  "))
+        assertEquals("%meeting%", HistoryMapper.containsPattern(" meeting "))
+        assertEquals("%100\\%\\_a\\\\b%", HistoryMapper.containsPattern("100%_a\\b"))
+    }
 }

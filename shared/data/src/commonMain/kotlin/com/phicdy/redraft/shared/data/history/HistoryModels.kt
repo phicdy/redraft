@@ -2,6 +2,7 @@ package com.phicdy.redraft.shared.data.history
 
 import com.phicdy.redraft.shared.model.InputMode
 import com.phicdy.redraft.shared.model.ProofreadResult
+import com.phicdy.redraft.shared.model.Severity
 import com.phicdy.redraft.shared.model.TranslationResult
 import kotlin.time.Instant
 
@@ -60,4 +61,20 @@ data class HistoryEntry(
     val model: String,
     val usage: HistoryUsage,
     val result: HistoryResult,
+)
+
+/** What a history list row needs, without decoding the stored result. */
+data class HistoryEntrySummary(
+    val id: String,
+    val createdAt: Instant,
+    val mode: InputMode,
+    val input: String,
+    /** The translation or the corrected text. */
+    val output: String,
+    /** Proofread issues with [Severity.Error]. */
+    val errorCount: Int,
+    /** Proofread issues with [Severity.Improvement]. */
+    val improvementCount: Int,
+    val grammarPointCount: Int,
+    val expressionCount: Int,
 )
