@@ -1,5 +1,6 @@
 package com.phicdy.redraft.shared.data.history
 
+import com.phicdy.redraft.shared.model.ProofreadResult
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
@@ -28,6 +29,12 @@ interface HistoryRepository {
 
     /** Totals for entries created in [from] (inclusive) until [until] (exclusive). */
     suspend fun aggregate(from: Instant, until: Instant): HistoryAggregation
+
+    /**
+     * Proofread issues of the newest [maxEntries] proofreading entries created in [from] (inclusive)
+     * until [until] (exclusive), newest entry first, for the weekly report to quote.
+     */
+    suspend fun recentIssues(from: Instant, until: Instant, maxEntries: Int): List<ProofreadResult.Issue>
 }
 
 /** The id of this install, generated once and kept. */
