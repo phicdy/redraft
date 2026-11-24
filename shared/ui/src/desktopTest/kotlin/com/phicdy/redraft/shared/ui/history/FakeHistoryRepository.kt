@@ -7,6 +7,7 @@ import com.phicdy.redraft.shared.data.history.HistoryEntrySummary
 import com.phicdy.redraft.shared.data.history.HistoryRepository
 import com.phicdy.redraft.shared.data.history.HistoryResult
 import com.phicdy.redraft.shared.data.history.HistoryUsage
+import com.phicdy.redraft.shared.model.InputMode
 import com.phicdy.redraft.shared.model.ProofreadResult
 import com.phicdy.redraft.shared.model.Severity
 import kotlinx.coroutines.flow.Flow
@@ -15,13 +16,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlin.time.Instant
 
-/** Keeps entries in memory. Set [saveFailure] or [deleteFailure] to make those calls fail. */
+/**
+ * Keeps entries in memory. Set [saveFailure] or [deleteFailure] to make those calls fail.
+ * [aggregate] answers from [aggregations] by range start and [recentIssues] with [issues].
+ */
 internal class FakeHistoryRepository : HistoryRepository {
     val entries = MutableStateFlow<List<HistoryEntry>>(emptyList())
     var saveFailure: Exception? = null
     var deleteFailure: Exception? = null
     val queries = mutableListOf<String?>()
     val deletedIds = mutableListOf<String>()
+    val aggregations = mutableMapOf<Instant, HistoryAggregation>()
+    val aggregatedRanges = mutableListOf<Pair<Instant, Instant>>()
+    var issues: List<ProofreadResult.Issue> = emptyList()
     private var nextId = 1
 
     override suspend fun save(
@@ -63,11 +70,19 @@ internal class FakeHistoryRepository : HistoryRepository {
         entries.update { list -> list.filterNot { it.id == id } }
     }
 
-    override suspend fun aggregate(from: Instant, until: Instant): HistoryAggregation =
-        error("Not used by the UI")
+    override suspend fun aggregate(from: Instant, until: Instant): HistoryAggregation {
+        aggregatedRanges += from to until
+        return aggregations[from] ?: emptyAggregation
+    }
 
-    override suspend fun recentIssues(from: Instant, until: Instant, maxEntries: Int): List<ProofreadResult.Issue> =
-        error("Not used by the UI")
+    override suspend fun recentIssues(from: Instant, until: Instant, maxEntries: Int): List<ProofreadResult.Issue> = issues
+
+    private val emptyAggregation = HistoryAggregation(
+        entryCounts = InputMode.entries.associateWith { 0 },
+        issueCounts = emptyList(),
+        grammarPointCounts = emptyList(),
+        expressions = emptyList(),
+    )
 
     private fun HistoryEntry.toSummary(): HistoryEntrySummary {
         val issues = (result as? HistoryResult.Proofread)?.result?.issues.orEmpty()

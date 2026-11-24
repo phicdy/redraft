@@ -8,12 +8,13 @@ import com.phicdy.redraft.shared.llm.LlmResult
 import com.phicdy.redraft.shared.llm.TokenUsage
 import com.phicdy.redraft.shared.model.ProofreadResult
 import com.phicdy.redraft.shared.model.TranslationResult
+import com.phicdy.redraft.shared.model.WeeklyReportNarrative
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
 /**
- * Answers with [translation] or [proofread] depending on the requested output type.
+ * Answers with [translation], [proofread] or [weeklyReport] depending on the requested output type.
  * Set [gate] to hold the answer until the test completes it, or [llmError] to fail.
  */
 internal class FakeLlmClient : LlmClient {
@@ -28,6 +29,13 @@ internal class FakeLlmClient : LlmClient {
         issues = emptyList(),
         naturalAlternatives = emptyList(),
         overallComment = "",
+    )
+    var weeklyReport: WeeklyReportNarrative = WeeklyReportNarrative(
+        summary = "今週もよく書けました。",
+        recurringMistakes = emptyList(),
+        improvements = emptyList(),
+        focusNextWeek = listOf("冠詞を確認する"),
+        expressionsToReview = emptyList(),
     )
     var usage: TokenUsage = TokenUsage(inputTokens = 10, outputTokens = 20)
     var llmError: LlmError? = null
@@ -47,6 +55,7 @@ internal class FakeLlmClient : LlmClient {
         val json = when (outputSerializer.descriptor.serialName) {
             TRANSLATION -> Json.encodeToString(TranslationResult.serializer(), translation)
             PROOFREAD -> Json.encodeToString(ProofreadResult.serializer(), proofread)
+            WEEKLY_REPORT -> Json.encodeToString(WeeklyReportNarrative.serializer(), weeklyReport)
             else -> error("Unexpected output type ${outputSerializer.descriptor.serialName}")
         }
         return LlmResult(
@@ -59,5 +68,6 @@ internal class FakeLlmClient : LlmClient {
     companion object {
         val TRANSLATION: String = TranslationResult.serializer().descriptor.serialName
         val PROOFREAD: String = ProofreadResult.serializer().descriptor.serialName
+        val WEEKLY_REPORT: String = WeeklyReportNarrative.serializer().descriptor.serialName
     }
 }
