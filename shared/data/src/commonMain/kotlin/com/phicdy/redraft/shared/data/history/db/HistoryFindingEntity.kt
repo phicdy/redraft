@@ -65,3 +65,9 @@ object FindingKind {
     const val GRAMMAR_POINT: String = "grammar_point"
     const val EXPRESSION: String = "expression"
 }
+
+/** Values of [HistoryFindingEntity.severity] (the `Severity` serial names) used in queries. */
+object FindingSeverity {
+    const val ERROR: String = "error"
+    const val IMPROVEMENT: String = "improvement"
+}
