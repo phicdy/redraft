@@ -9,6 +9,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# An explicit bash shell runs with `-o pipefail`, so a failing Gradle command piped
+# into `tee` fails the step instead of passing silently.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     runs-on: ubuntu-latest
